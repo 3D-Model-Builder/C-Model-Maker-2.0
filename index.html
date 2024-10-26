@@ -3,27 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Unity C# Code Generator with Multiple Shapes</title>
+    <title>Unity-Like 3D Editor</title>
     <style>
-        body { font-family: Arial, sans-serif; }
+        body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+        #editor { display: flex; flex-direction: row; width: 80%; max-width: 1200px; }
+        #controls, #objectList, #codeOutput { margin: 10px; }
         #threeCanvas { width: 100%; height: 400px; background: #333; }
-        textarea { width: 100%; height: 200px; margin-top: 10px; }
-        #controls { margin: 10px 0; }
+        #objectList { width: 200px; border: 1px solid #aaa; padding: 10px; }
+        #codeOutput { width: 100%; height: 200px; }
+        .button { margin: 5px; }
+        #objectList div { cursor: pointer; padding: 5px; background: #ddd; margin: 5px 0; }
+        #objectList div.selected { background: #666; color: white; }
     </style>
 </head>
 <body>
-    <h1>3D Unity C# Code Generator with Multiple Shapes</h1>
-    
-    <div id="controls">
-        <label for="objectName">Base Object Name: </label>
-        <input type="text" id="objectName" placeholder="Enter name for base object">
-        
-        <button onclick="addShape('cube')">Add Cube</button>
-        <button onclick="addShape('sphere')">Add Sphere</button>
-        <button onclick="addShape('cone')">Add Cone</button>
+    <h1>Unity-Like 3D Editor</h1>
+
+    <div id="editor">
+        <div id="controls">
+            <label for="objectName">Base Object Name: </label>
+            <input type="text" id="objectName" placeholder="Enter base object name" />
+
+            <button class="button" onclick="addShape('cube')">Add Cube</button>
+            <button class="button" onclick="addShape('sphere')">Add Sphere</button>
+            <button class="button" onclick="addShape('cone')">Add Cone</button>
+
+            <h2>Object List</h2>
+            <div id="objectList"></div>
+        </div>
+
+        <div id="threeCanvas"></div>
     </div>
 
-    <div id="threeCanvas"></div>
     <button onclick="generateCode()">Generate C# Code</button>
     <h2>Generated Code:</h2>
     <textarea id="codeOutput" readonly></textarea>
@@ -33,6 +44,7 @@
     <script>
         let scene, camera, renderer, controls;
         const shapes = [];
+        let selectedObject = null;
 
         function init() {
             scene = new THREE.Scene();
@@ -40,10 +52,11 @@
             camera.position.z = 5;
 
             renderer = new THREE.WebGLRenderer();
-            renderer.setSize(window.innerWidth, 400);
+            renderer.setSize(window.innerWidth * 0.6, 400);
             document.getElementById('threeCanvas').appendChild(renderer.domElement);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
+
             animate();
         }
 
@@ -61,9 +74,34 @@
             else if (type === 'cone') geometry = new THREE.ConeGeometry(0.5, 1, 32);
 
             shape = new THREE.Mesh(geometry, material);
-            shape.userData = { type };  // Store shape type for code generation
+            shape.userData = { type, name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${shapes.length + 1}` };
             scene.add(shape);
             shapes.push(shape);
+
+            updateObjectList();
+        }
+
+        function updateObjectList() {
+            const objectList = document.getElementById('objectList');
+            objectList.innerHTML = '';
+
+            shapes.forEach((shape, index) => {
+                const div = document.createElement('div');
+                div.textContent = shape.userData.name;
+                div.classList.add('objectItem');
+                if (selectedObject === shape) div.classList.add('selected');
+                
+                div.onclick = () => {
+                    selectObject(index);
+                };
+
+                objectList.appendChild(div);
+            });
+        }
+
+        function selectObject(index) {
+            selectedObject = shapes[index];
+            updateObjectList();
         }
 
         function generateCode() {
