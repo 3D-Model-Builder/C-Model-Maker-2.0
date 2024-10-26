@@ -8,7 +8,7 @@
         body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
         #editor { display: flex; flex-direction: row; width: 80%; max-width: 1200px; }
         #controls, #objectList, #codeOutput { margin: 10px; }
-        #threeCanvas { width: 100%; height: 400px; background: #eee; position: relative; }
+        #threeCanvas { width: 100%; height: 400px; background: #eeeeee; position: relative; }
         #objectList { width: 200px; border: 1px solid #aaa; padding: 10px; }
         #codeOutput { width: 100%; height: 200px; }
         .button { margin: 5px; }
@@ -17,7 +17,6 @@
         #scaleControl { margin-top: 10px; }
         #movementControls { display: flex; flex-direction: column; align-items: center; }
         .arrowButton { display: inline-block; padding: 10px; background: #ccc; margin: 5px; cursor: pointer; }
-        #grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -73,6 +72,7 @@
 
         function init() {
             scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xeeeeee); // Light background color
 
             // Set up camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -94,7 +94,6 @@
             // Renderer setup
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth * 0.6, 400);
-            renderer.setClearColor(0xeeeeee); // Light background color
             document.getElementById('threeCanvas').appendChild(renderer.domElement);
 
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -121,6 +120,7 @@
 
             shape = new THREE.Mesh(geometry, material);
             shape.userData = { type, name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${shapes.length + 1}` };
+            shape.position.set(0, 0.5, 0); // Position it above the ground
             scene.add(shape);
             shapes.push(shape);
 
