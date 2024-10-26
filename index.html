@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unity C# Code Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        label, select, input, button { display: block; margin: 10px 0; width: 100%; }
+        textarea { width: 100%; height: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Unity C# Code Generator</h1>
+    <label for="shape">Select Shape:</label>
+    <select id="shape">
+        <option value="Cube">Cube</option>
+        <option value="Sphere">Sphere</option>
+        <option value="Capsule">Capsule</option>
+    </select>
+
+    <label for="width">Width:</label>
+    <input type="number" id="width" placeholder="Enter width" step="0.1" min="0">
+
+    <label for="height">Height:</label>
+    <input type="number" id="height" placeholder="Enter height" step="0.1" min="0">
+
+    <label for="depth">Depth:</label>
+    <input type="number" id="depth" placeholder="Enter depth" step="0.1" min="0">
+
+    <button onclick="generateCode()">Generate C# Code</button>
+
+    <h2>Generated Code:</h2>
+    <textarea id="codeOutput" readonly></textarea>
+
+    <script>
+        function generateCode() {
+            // Get user inputs
+            const shape = document.getElementById('shape').value;
+            const width = document.getElementById('width').value || 1;
+            const height = document.getElementById('height').value || 1;
+            const depth = document.getElementById('depth').value || 1;
+
+            // Generate the C# code
+            const code = `
+using UnityEngine;
+
+public class CreatePrimitive : MonoBehaviour
+{
+    void Start()
+    {
+        GameObject ${shape.toLowerCase()} = GameObject.CreatePrimitive(PrimitiveType.${shape});
+        ${shape.toLowerCase()}.transform.localScale = new Vector3(${width}f, ${height}f, ${depth}f);
+    }
+}
+            `;
+
+            // Display the code
+            document.getElementById('codeOutput').textContent = code;
+        }
+    </script>
+</body>
+</html>
