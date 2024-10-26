@@ -3,61 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Unity C# Code Generator</title>
+    <title>3D Unity C# Code Generator with Multiple Shapes</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-        label, select, input, button { display: block; margin: 10px 0; width: 100%; }
-        textarea { width: 100%; height: 200px; }
+        body { font-family: Arial, sans-serif; }
+        #threeCanvas { width: 100%; height: 400px; background: #333; }
+        textarea { width: 100%; height: 200px; margin-top: 10px; }
+        #controls { margin: 10px 0; }
     </style>
 </head>
 <body>
-    <h1>Unity C# Code Generator</h1>
-    <label for="shape">Select Shape:</label>
-    <select id="shape">
-        <option value="Cube">Cube</option>
-        <option value="Sphere">Sphere</option>
-        <option value="Capsule">Capsule</option>
-    </select>
+    <h1>3D Unity C# Code Generator with Multiple Shapes</h1>
+    
+    <div id="controls">
+        <label for="objectName">Base Object Name: </label>
+        <input type="text" id="objectName" placeholder="Enter name for base object">
+        
+        <button onclick="addShape('cube')">Add Cube</button>
+        <button onclick="addShape('sphere')">Add Sphere</button>
+        <button onclick="addShape('cone')">Add Cone</button>
+    </div>
 
-    <label for="width">Width:</label>
-    <input type="number" id="width" placeholder="Enter width" step="0.1" min="0">
-
-    <label for="height">Height:</label>
-    <input type="number" id="height" placeholder="Enter height" step="0.1" min="0">
-
-    <label for="depth">Depth:</label>
-    <input type="number" id="depth" placeholder="Enter depth" step="0.1" min="0">
-
+    <div id="threeCanvas"></div>
     <button onclick="generateCode()">Generate C# Code</button>
-
     <h2>Generated Code:</h2>
     <textarea id="codeOutput" readonly></textarea>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
     <script>
+        let scene, camera, renderer, controls;
+        const shapes = [];
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / 400, 0.1, 1000);
+            camera.position.z = 5;
+
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, 400);
+            document.getElementById('threeCanvas').appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function addShape(type) {
+            let geometry, material, shape;
+            material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
+
+            if (type === 'cube') geometry = new THREE.BoxGeometry(1, 1, 1);
+            else if (type === 'sphere') geometry = new THREE.SphereGeometry(0.5, 32, 32);
+            else if (type === 'cone') geometry = new THREE.ConeGeometry(0.5, 1, 32);
+
+            shape = new THREE.Mesh(geometry, material);
+            shape.userData = { type };  // Store shape type for code generation
+            scene.add(shape);
+            shapes.push(shape);
+        }
+
         function generateCode() {
-            // Get user inputs
-            const shape = document.getElementById('shape').value;
-            const width = document.getElementById('width').value || 1;
-            const height = document.getElementById('height').value || 1;
-            const depth = document.getElementById('depth').value || 1;
+            const baseName = document.getElementById('objectName').value || "BaseObject";
+            let code = `using UnityEngine;\n\npublic class ${baseName} : MonoBehaviour\n{\n    void Start()\n    {\n        GameObject ${baseName} = new GameObject("${baseName}");\n`;
 
-            // Generate the C# code
-            const code = `
-using UnityEngine;
+            shapes.forEach((shape, index) => {
+                const pos = shape.position;
+                const rot = shape.rotation;
+                const scale = shape.scale;
+                const type = shape.userData.type.charAt(0).toUpperCase() + shape.userData.type.slice(1);
 
-public class CreatePrimitive : MonoBehaviour
-{
-    void Start()
-    {
-        GameObject ${shape.toLowerCase()} = GameObject.CreatePrimitive(PrimitiveType.${shape});
-        ${shape.toLowerCase()}.transform.localScale = new Vector3(${width}f, ${height}f, ${depth}f);
-    }
-}
-            `;
+                code += `        GameObject ${type}${index} = GameObject.CreatePrimitive(PrimitiveType.${type});\n`;
+                code += `        ${type}${index}.transform.parent = ${baseName}.transform;\n`;
+                code += `        ${type}${index}.transform.localPosition = new Vector3(${pos.x.toFixed(2)}f, ${pos.y.toFixed(2)}f, ${pos.z.toFixed(2)}f);\n`;
+                code += `        ${type}${index}.transform.localRotation = Quaternion.Euler(${THREE.Math.radToDeg(rot.x).toFixed(2)}f, ${THREE.Math.radToDeg(rot.y).toFixed(2)}f, ${THREE.Math.radToDeg(rot.z).toFixed(2)}f);\n`;
+                code += `        ${type}${index}.transform.localScale = new Vector3(${scale.x.toFixed(2)}f, ${scale.y.toFixed(2)}f, ${scale.z.toFixed(2)}f);\n\n`;
+            });
 
-            // Display the code
+            code += `    }\n}`;
             document.getElementById('codeOutput').textContent = code;
         }
+
+        init();
     </script>
 </body>
 </html>
